@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>panini-diff — sticker trade overlap</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>panini-diff</h1>
+    <p class="tagline">Drop or paste two sticker lists — see what you both have and what's only on one side.</p>
+    <div id="keyBanner" class="banner banner-warn" hidden>
+      Image extraction is off — <code>ANTHROPIC_API_KEY</code> is not set on the server. Text lists still work.
+    </div>
+  </header>
+
+  <main class="panes">
+    <!-- Panes are generated identically for both sides; template below. -->
+    <section class="pane" data-side="mine">
+      <div class="pane-head">
+        <h2>Your list</h2>
+        <span class="count" data-count>0 cards</span>
+      </div>
+      <div class="dropzone" data-drop tabindex="0">
+        <textarea data-text placeholder="Type or paste your list here (e.g. MAR 15, GER 9, BRA: 4, 10, 12)&#10;…or drop / paste images of a list."></textarea>
+        <div class="drop-hint" data-drophint>Drop or paste images anywhere in this box</div>
+      </div>
+      <ul class="sources" data-sources></ul>
+    </section>
+
+    <section class="pane" data-side="theirs">
+      <div class="pane-head">
+        <h2>Their list</h2>
+        <span class="count" data-count>0 cards</span>
+      </div>
+      <div class="dropzone" data-drop tabindex="0">
+        <textarea data-text placeholder="Type or paste their list here…&#10;…or drop / paste images of a list."></textarea>
+        <div class="drop-hint" data-drophint>Drop or paste images anywhere in this box</div>
+      </div>
+      <ul class="sources" data-sources></ul>
+    </section>
+  </main>
+
+  <section class="results">
+    <div class="bucket bucket-both">
+      <h3>● Matches <span class="n" id="n-overlap">0</span></h3>
+      <div class="groups" id="g-overlap"></div>
+    </div>
+    <div class="bucket bucket-mine">
+      <h3>◆ Only your list <span class="n" id="n-mine">0</span></h3>
+      <div class="groups" id="g-mine"></div>
+    </div>
+    <div class="bucket bucket-theirs">
+      <h3>◇ Only their list <span class="n" id="n-theirs">0</span></h3>
+      <div class="groups" id="g-theirs"></div>
+    </div>
+  </section>
+
+  <section class="needs-look" id="needsLook" hidden>
+    <h3>⚠ Needs a look</h3>
+    <ul id="needsLookList"></ul>
+    <p class="muted">Excluded from the overlap above — fix the source text and it re-runs automatically.</p>
+  </section>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

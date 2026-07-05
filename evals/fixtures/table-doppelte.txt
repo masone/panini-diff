@@ -1,0 +1,26 @@
+# Ground truth for: panini-wm-2026-verkaufe-meine-doppelten.jpg
+# Spreadsheet table: German name + code + numbers in columns; (Nx) counts must be
+# ignored; "Spezial" section header and the empty Schottland/SCO row yield no cards.
+MEX 6
+RSA 1, 7, 12, 20
+KOR 1, 18
+CZE 1, 5, 7, 14, 16
+CAN 14, 18, 20
+BIH 1, 4, 9, 12, 17
+QAT 8, 13
+SUI 5, 7
+BRA 3, 9
+MAR 1, 2, 4, 12
+HAI 1
+USA 5, 12, 16
+PAR 1, 7, 8, 12
+AUS 2, 7, 18
+TUR 1, 2, 3, 8, 10, 11, 14, 16
+GER 10
+CUW 4, 10, 13, 16
+CIV 13, 16, 17
+ECU 1, 3, 8
+NED 1, 6, 7, 12, 17, 19, 20
+JPN 1, 10, 14
+SWE 1, 2, 12, 17, 20
+TUN 1, 11, 17

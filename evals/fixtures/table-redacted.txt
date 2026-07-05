@@ -1,0 +1,47 @@
+# Ground truth for: panini-2026-kaufen-020-pro-stuck.jpg
+# Two-column table with several REDACTED (black-bar) cells. This fixture lists
+# only the confidently-readable cards; fully-redacted rows are intentionally
+# omitted and must be reported as "unreadable" rather than guessed. Stray "·"
+# dots are OCR artifacts, not data. mode=partial (see manifest).
+MEX 3
+RSA 16
+KOR 9, 19, 20
+CZE 7, 10
+CAN 3, 10, 16
+QAT 6, 18, 19
+SUI 9
+MAR 6, 9, 11, 14, 19
+HAI 14, 17
+SCO 6, 13, 16
+USA 19
+AUS 1, 8
+TUR 2
+GER 12
+CIV 4
+ECU 11, 17
+NED 2, 20
+JPN 8, 9, 15, 17
+SWE 11
+TUN 11, 14
+FWC 12
+BEL 2, 19
+EGY 18
+IRN 6
+NZL 17
+CPV 3, 4
+KSA 12
+URU 2, 11
+SEN 5
+IRQ 18
+NOR 2, 20
+ALG 1
+AUT 4, 7, 11
+JOR 1
+POR 1, 9
+COD 19
+UZB 8
+COL 6
+ENG 12, 17
+CRO 6, 10, 14
+GHA 6, 11
+PAN 6, 10, 16

@@ -1,0 +1,18 @@
+{
+  "name": "panini-diff",
+  "version": "0.1.0",
+  "description": "Diff two Panini WM 2026 sticker lists (from images or text) to find tradeable overlap",
+  "type": "module",
+  "bin": {
+    "panini-diff": "./src/cli.js"
+  },
+  "scripts": {
+    "diff": "node src/cli.js",
+    "web": "node --env-file=.env src/server.js",
+    "test": "node --test 'test/**/*.test.js'",
+    "eval": "node evals/extract.eval.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0"
+  }
+}

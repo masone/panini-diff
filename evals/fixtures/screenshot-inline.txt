@@ -1,0 +1,9 @@
+# Ground truth for: Screenshot 2026-07-04 at 20.11.18.png
+# Chat message "Wir haben: ..." — clean inline, multiple codes on two wrapped lines.
+MAR 11
+BEL 10
+KSA 14
+AUT 4
+CRO 11
+GHA 18
+PAN 16
