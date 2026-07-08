@@ -33,6 +33,7 @@ async function uploadImage(side, file) {
   const source = { id: s.nextId++, name: file.name || 'pasted image', status: 'reading', error: '', unreadable: [], notes: '' };
   s.sources.push(source);
   renderSources(side);
+  updateReadOnly(side);
 
   try {
     const buf = await file.arrayBuffer();
@@ -86,6 +87,22 @@ function appendLines(side, lines) {
   sides[side].text = ta.value;
 }
 
+// The field goes read-only once an upload has been used on that side — the
+// text now reflects extracted images, not something the user typed/pasted.
+// Clearing removes the uploads and returns the field to a writable state.
+function updateReadOnly(side) {
+  q(side, '[data-text]').readOnly = sides[side].sources.length > 0;
+}
+
+function clearSide(side) {
+  const ta = q(side, '[data-text]');
+  sides[side] = { text: '', sources: [], nextId: 1 };
+  ta.value = '';
+  ta.readOnly = false;
+  renderSources(side);
+  rerender();
+}
+
 // ---- Drag / drop / paste ------------------------------------------------
 
 function imageFilesFrom(dataTransfer) {
@@ -99,6 +116,8 @@ function imageFilesFrom(dataTransfer) {
 function wireInput(side) {
   const drop = q(side, '[data-drop]');
   const ta = q(side, '[data-text]');
+
+  q(side, '[data-clear]').addEventListener('click', () => clearSide(side));
 
   ta.addEventListener('input', () => {
     sides[side].text = ta.value;
