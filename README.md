@@ -61,7 +61,7 @@ browser).
 
 ```bash
 echo "ANTHROPIC_API_KEY=sk-..." > .env
-npm run web   # http://localhost:5173
+npm run dev   # http://localhost:5173
 ```
 
 **Vercel** (`api/*.js`, deployed as serverless functions):
@@ -113,7 +113,7 @@ were corrected this way, confirmed by cropping/zooming the source).
 | `src/checklist.js` | the 48 team codes, specials, aliases, name→code map |
 | `src/extract.js` | image → cards via Claude vision |
 | `src/httpExtract.js` | shared extract-route logic (validation, error mapping) |
-| `src/devServer.js` | plain-node dev server (`npm run web`) |
+| `src/devServer.js` | plain-node dev server (`npm run dev`) |
 | `src/cli.js` | two-file CLI |
 | `api/extract.js`, `api/health.js` | Vercel serverless equivalents of the same routes |
 | `web/` | drag-and-drop browser UI |
