@@ -1,5 +1,5 @@
 // POST /api/extract -> one raw image body -> { cards, unreadable, notes, model }
-// Vercel serverless equivalent of the same route in src/server.js — both share
+// Vercel serverless equivalent of the same route in src/devServer.js — both share
 // the validation/error-mapping logic in src/httpExtract.js so behavior can't drift.
 
 import Anthropic from '@anthropic-ai/sdk';

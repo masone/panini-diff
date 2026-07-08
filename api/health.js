@@ -1,4 +1,4 @@
-// GET /api/health -> { hasKey, defaultModel }, same contract as src/server.js,
+// GET /api/health -> { hasKey, defaultModel }, same contract as src/devServer.js,
 // so the client's `hasKey` check behaves identically on Vercel and locally.
 
 import { DEFAULT_MODEL } from '../src/extract.js';

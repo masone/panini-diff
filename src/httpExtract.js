@@ -1,5 +1,5 @@
 // Shared image-extraction request handling, used by both the plain-node dev
-// server (src/server.js) and the Vercel serverless function (api/extract.js)
+// server (src/devServer.js) and the Vercel serverless function (api/extract.js)
 // so the two hosts can't drift on validation, error mapping, or model choice.
 
 import { extractFromImageBuffer, DEFAULT_MODEL, SUPPORTED_MEDIA_TYPES } from './extract.js';

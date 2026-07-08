@@ -57,7 +57,7 @@ The text-diffing UI runs entirely client-side; image extraction needs a
 backend (Claude vision needs `ANTHROPIC_API_KEY`, which must never reach the
 browser).
 
-**Plain node** (`src/server.js`, all-in-one dev server):
+**Plain node** (`src/devServer.js`, all-in-one dev server):
 
 ```bash
 echo "ANTHROPIC_API_KEY=sk-..." > .env
@@ -85,7 +85,7 @@ image extraction is disabled but text-list diffing still works.
 
 `api/extract.js` and `api/health.js` are thin Vercel wrappers around the same
 validation/error logic in [`src/httpExtract.js`](src/httpExtract.js) that
-`src/server.js` uses, so behavior is identical on both hosts.
+`src/devServer.js` uses, so behavior is identical on both hosts.
 
 ## Tests & evals
 
@@ -113,7 +113,7 @@ were corrected this way, confirmed by cropping/zooming the source).
 | `src/checklist.js` | the 48 team codes, specials, aliases, name→code map |
 | `src/extract.js` | image → cards via Claude vision |
 | `src/httpExtract.js` | shared extract-route logic (validation, error mapping) |
-| `src/server.js` | plain-node dev server (`npm run web`) |
+| `src/devServer.js` | plain-node dev server (`npm run web`) |
 | `src/cli.js` | two-file CLI |
 | `api/extract.js`, `api/health.js` | Vercel serverless equivalents of the same routes |
 | `web/` | drag-and-drop browser UI |

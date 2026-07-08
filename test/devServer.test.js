@@ -1,6 +1,6 @@
 import { test, before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { createServer, __setClientForTest } from '../src/server.js';
+import { createServer, __setClientForTest } from '../src/devServer.js';
 
 // Spin the real http server up on an ephemeral port and talk to it over fetch,
 // so these are true end-to-end route tests (no network to Anthropic — the vision

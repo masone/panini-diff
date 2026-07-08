@@ -8,7 +8,7 @@
   },
   "scripts": {
     "diff": "node src/cli.js",
-    "web": "node --env-file=.env src/server.js",
+    "web": "node --env-file=.env src/devServer.js",
     "test": "node --test 'test/**/*.test.js'",
     "eval": "node evals/extract.eval.js"
   },
