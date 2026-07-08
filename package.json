@@ -8,12 +8,14 @@
   },
   "scripts": {
     "diff": "node src/cli.js",
-    "dev": "node --env-file=.env src/server.js",
-    "web": "node --env-file=.env src/server.js",
+    "deploy": "vercel --prod",
     "test": "node --test 'test/**/*.test.js'",
     "eval": "node evals/extract.eval.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0"
+  },
+  "devDependencies": {
+    "vercel": "^54.20.1"
   }
 }
