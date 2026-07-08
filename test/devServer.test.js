@@ -21,7 +21,11 @@ after(() => server.close());
 beforeEach(() => {
   __setClientForTest(null);
   delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.BASIC_AUTH_USER;
+  delete process.env.BASIC_AUTH_PASS;
 });
+
+const basicHeader = (u, p) => `Basic ${Buffer.from(`${u}:${p}`).toString('base64')}`;
 
 const png = Buffer.from('fake-png-bytes');
 
@@ -113,4 +117,39 @@ test('POST /api/extract surfaces a 401 upstream as 502 upstream-auth', async () 
 test('unknown route -> 404', async () => {
   const res = await fetch(`${base}/nope`);
   assert.equal(res.status, 404);
+});
+
+test('with auth off, requests pass through without credentials', async () => {
+  const res = await fetch(`${base}/api/health`);
+  assert.equal(res.status, 200);
+});
+
+test('with auth on, a request without credentials -> 401 + WWW-Authenticate', async () => {
+  process.env.BASIC_AUTH_USER = 'alice';
+  process.env.BASIC_AUTH_PASS = 's3cret';
+  const res = await fetch(`${base}/`);
+  assert.equal(res.status, 401);
+  assert.match(res.headers.get('www-authenticate'), /^Basic realm=/);
+});
+
+test('with auth on, wrong credentials -> 401', async () => {
+  process.env.BASIC_AUTH_USER = 'alice';
+  process.env.BASIC_AUTH_PASS = 's3cret';
+  const res = await fetch(`${base}/`, { headers: { Authorization: basicHeader('alice', 'nope') } });
+  assert.equal(res.status, 401);
+});
+
+test('with auth on, correct credentials pass through', async () => {
+  process.env.BASIC_AUTH_USER = 'alice';
+  process.env.BASIC_AUTH_PASS = 's3cret';
+  const res = await fetch(`${base}/api/health`, { headers: { Authorization: basicHeader('alice', 's3cret') } });
+  assert.equal(res.status, 200);
+  assert.equal((await res.json()).hasKey, false);
+});
+
+test('with auth on, a malformed Authorization header -> 401', async () => {
+  process.env.BASIC_AUTH_USER = 'alice';
+  process.env.BASIC_AUTH_PASS = 's3cret';
+  const res = await fetch(`${base}/`, { headers: { Authorization: 'Bearer xyz' } });
+  assert.equal(res.status, 401);
 });

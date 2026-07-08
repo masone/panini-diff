@@ -87,6 +87,21 @@ image extraction is disabled but text-list diffing still works.
 validation/error logic in [`src/httpExtract.js`](src/httpExtract.js) that
 `src/devServer.js` uses, so behavior is identical on both hosts.
 
+### Password-protecting a deployment
+
+Set both `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` to gate the whole site behind
+HTTP Basic Auth; leave them unset (as in local dev) and it stays open.
+
+- **On Vercel**, [`middleware.js`](middleware.js) (Edge Middleware) enforces it —
+  the one layer that runs before both the CDN-served static assets and the
+  `/api/*` functions. Add the two vars in the Vercel project's environment
+  settings (or `vercel env add`).
+- **Locally**, `src/devServer.js` enforces the same gate:
+
+  ```bash
+  BASIC_AUTH_USER=me BASIC_AUTH_PASS=letmein npm run dev
+  ```
+
 ## Tests & evals
 
 ```bash
@@ -116,5 +131,6 @@ were corrected this way, confirmed by cropping/zooming the source).
 | `src/devServer.js` | plain-node dev server (`npm run dev`) |
 | `src/cli.js` | two-file CLI |
 | `api/extract.js`, `api/health.js` | Vercel serverless equivalents of the same routes |
+| `middleware.js` | Vercel Edge Middleware — HTTP Basic Auth gate for the deploy |
 | `web/` | drag-and-drop browser UI |
 | `evals/` | sample images/lists, ground-truth fixtures, eval runner |
