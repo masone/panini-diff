@@ -186,27 +186,32 @@ async function handleExtract(req, res, url) {
   }
 }
 
+// The bare (req, res) handler, kept separate from http.createServer so a
+// serverless host (e.g. Vercel) can drive the same routing/auth logic without a
+// long-lived listener. Node's IncomingMessage/ServerResponse are what both give us.
+export async function handleRequest(req, res) {
+  const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const pathname = url.pathname;
+
+  // Gate everything behind Basic Auth first when it's enabled for the deploy.
+  if (!checkAuth(req)) return sendUnauthorized(res);
+
+  if (req.method === 'GET' && pathname === '/api/health') {
+    return sendJson(res, 200, { hasKey: hasKey(), defaultModel: DEFAULT_MODEL });
+  }
+  if (req.method === 'POST' && pathname === '/api/extract') {
+    return handleExtract(req, res, url);
+  }
+  if (req.method === 'GET' && STATIC[pathname]) {
+    return serveStatic(res, STATIC[pathname]);
+  }
+
+  res.writeHead(404, { 'Content-Type': 'text/plain' });
+  res.end('Not found');
+}
+
 export function createServer() {
-  return http.createServer(async (req, res) => {
-    const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    const pathname = url.pathname;
-
-    // Gate everything behind Basic Auth first when it's enabled for the deploy.
-    if (!checkAuth(req)) return sendUnauthorized(res);
-
-    if (req.method === 'GET' && pathname === '/api/health') {
-      return sendJson(res, 200, { hasKey: hasKey(), defaultModel: DEFAULT_MODEL });
-    }
-    if (req.method === 'POST' && pathname === '/api/extract') {
-      return handleExtract(req, res, url);
-    }
-    if (req.method === 'GET' && STATIC[pathname]) {
-      return serveStatic(res, STATIC[pathname]);
-    }
-
-    res.writeHead(404, { 'Content-Type': 'text/plain' });
-    res.end('Not found');
-  });
+  return http.createServer(handleRequest);
 }
 
 // Start only when run directly, not when imported by a test.
