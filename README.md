@@ -51,6 +51,42 @@ Real-world messiness observed in `evals/`:
 - junk: prices, URLs, phone numbers, chat UI, section headers
 - redacted / blurred cells in photos → reported as unreadable, not invented
 
+## Web UI
+
+The text-diffing UI runs entirely client-side; image extraction needs a
+backend (Claude vision needs `ANTHROPIC_API_KEY`, which must never reach the
+browser).
+
+**Plain node** (`src/server.js`, all-in-one dev server):
+
+```bash
+echo "ANTHROPIC_API_KEY=sk-..." > .env
+npm run web   # http://localhost:5173
+```
+
+**Vercel** (`api/*.js`, deployed as serverless functions):
+
+```bash
+npx vercel dev   # http://localhost:3000, reads .env automatically
+```
+
+(Run `vercel dev` directly, not via an npm script — Vercel auto-detects a
+`package.json` `"dev"` script as the project's Development Command, and a
+script that itself runs `vercel dev` recurses into itself.)
+
+```bash
+npx vercel        # deploy a preview
+npx vercel --prod # deploy to production
+```
+
+Set `ANTHROPIC_API_KEY` as an environment variable in the Vercel project
+settings (or `vercel env add ANTHROPIC_API_KEY`) before deploying — without it
+image extraction is disabled but text-list diffing still works.
+
+`api/extract.js` and `api/health.js` are thin Vercel wrappers around the same
+validation/error logic in [`src/httpExtract.js`](src/httpExtract.js) that
+`src/server.js` uses, so behavior is identical on both hosts.
+
 ## Tests & evals
 
 ```bash
@@ -76,7 +112,9 @@ were corrected this way, confirmed by cropping/zooming the source).
 | `src/cards.js` | pure parsing, normalization, diff (no I/O) |
 | `src/checklist.js` | the 48 team codes, specials, aliases, name→code map |
 | `src/extract.js` | image → cards via Claude vision |
+| `src/httpExtract.js` | shared extract-route logic (validation, error mapping) |
+| `src/server.js` | plain-node dev server (`npm run web`) |
 | `src/cli.js` | two-file CLI |
+| `api/extract.js`, `api/health.js` | Vercel serverless equivalents of the same routes |
+| `web/` | drag-and-drop browser UI |
 | `evals/` | sample images/lists, ground-truth fixtures, eval runner |
-
-A web drag-and-drop UI is planned on top of these functions.

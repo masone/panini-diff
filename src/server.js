@@ -21,15 +21,13 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
-import { extractFromImageBuffer, DEFAULT_MODEL, SUPPORTED_MEDIA_TYPES } from './extract.js';
+import { DEFAULT_MODEL } from './extract.js';
+import { readBody, runExtract, resolveModel, MAX_UPLOAD_BYTES, EXTRACT_TIMEOUT_MS } from './httpExtract.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 
 const PORT = Number(process.env.PORT) || 5173;
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB — Claude vision has image limits
-const EXTRACT_TIMEOUT_MS = 60_000;
-const MODEL_ALLOWLIST = new Set(['claude-opus-4-8', 'claude-sonnet-5']);
 
 // Static routes: request path -> { file, type }. An explicit whitelist (no
 // path-from-URL join) so there is no directory-traversal surface.
@@ -77,26 +75,6 @@ async function serveStatic(res, route) {
   }
 }
 
-// Read the raw request body into a Buffer, enforcing the size cap as we go so a
-// huge upload can't exhaust memory before we reject it.
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    const chunks = [];
-    let size = 0;
-    req.on('data', (c) => {
-      size += c.length;
-      if (size > MAX_UPLOAD_BYTES) {
-        reject(Object.assign(new Error('too-large'), { code: 'too-large' }));
-        req.destroy();
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => resolve(Buffer.concat(chunks)));
-    req.on('error', reject);
-  });
-}
-
 // POST /api/extract — one image, raw body, real image content-type. Returns the
 // extracted {code, number} pairs (resolved codes) plus unreadable/notes. The
 // client turns pairs into text lines and re-runs its own parseText, so the
@@ -104,13 +82,7 @@ function readBody(req) {
 async function handleExtract(req, res, url) {
   if (!hasKey()) return sendJson(res, 503, { error: 'no-api-key' });
 
-  const mediaType = (req.headers['content-type'] || '').split(';')[0].trim().toLowerCase();
-  if (!SUPPORTED_MEDIA_TYPES.has(mediaType)) {
-    return sendJson(res, 415, { error: 'unsupported-type', mediaType, supported: [...SUPPORTED_MEDIA_TYPES] });
-  }
-
-  const modelParam = url.searchParams.get('model');
-  const model = modelParam && MODEL_ALLOWLIST.has(modelParam) ? modelParam : DEFAULT_MODEL;
+  const model = resolveModel(url.searchParams.get('model'));
 
   let buffer;
   try {
@@ -119,25 +91,9 @@ async function handleExtract(req, res, url) {
     if (err.code === 'too-large') return sendJson(res, 413, { error: 'too-large', maxBytes: MAX_UPLOAD_BYTES });
     return sendJson(res, 400, { error: 'bad-request' });
   }
-  if (!buffer.length) return sendJson(res, 400, { error: 'empty-body' });
 
-  try {
-    const { cards, unreadable, notes } = await extractFromImageBuffer(buffer, mediaType, {
-      client: getClient(),
-      model,
-    });
-    // Return resolved {code, number} pairs; the client re-normalizes via buildCard.
-    const pairs = cards.map((c) => ({ code: c.code, number: c.number }));
-    return sendJson(res, 200, { cards: pairs, unreadable, notes, model });
-  } catch (err) {
-    const status = err?.status || err?.response?.status;
-    if (status === 401) return sendJson(res, 502, { error: 'upstream-auth' });
-    if (err?.name === 'APIUserAbortError' || /timeout|aborted/i.test(err?.message || '')) {
-      return sendJson(res, 504, { error: 'timeout' });
-    }
-    // Never leak the key or a stack trace; a short message is enough for the UI.
-    return sendJson(res, 502, { error: 'extract-failed', message: String(err?.message || 'extraction failed') });
-  }
+  const { status, body } = await runExtract({ contentType: req.headers['content-type'], buffer, client: getClient(), model });
+  return sendJson(res, status, body);
 }
 
 export function createServer() {

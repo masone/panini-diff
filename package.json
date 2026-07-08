@@ -14,5 +14,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0"
+  },
+  "devDependencies": {
+    "vercel": "^54.20.1"
   }
 }
