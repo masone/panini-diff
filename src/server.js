@@ -18,6 +18,7 @@
 
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { timingSafeEqual } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Anthropic from '@anthropic-ai/sdk';
@@ -58,6 +59,51 @@ function getClient() {
 // without a network call or a real API key. Pass null to reset.
 export function __setClientForTest(client) {
   injectedClient = client;
+}
+
+// HTTP Basic Auth, active ONLY when BASIC_AUTH_USER + BASIC_AUTH_PASS are both
+// set. That keeps local dev open (`npm run web` with no creds) while a deploy
+// can gate the whole site by setting the two env vars. Read lazily each request
+// so tests can toggle it, and so it can't be misconfigured to half-on.
+const authRequired = () =>
+  Boolean(process.env.BASIC_AUTH_USER && process.env.BASIC_AUTH_PASS);
+
+// Constant-time string compare that doesn't leak length via early return.
+function safeEqual(a, b) {
+  const ab = Buffer.from(a, 'utf8');
+  const bb = Buffer.from(b, 'utf8');
+  if (ab.length !== bb.length) return false;
+  return timingSafeEqual(ab, bb);
+}
+
+// Returns true if the request carries valid credentials (or auth is off).
+function checkAuth(req) {
+  if (!authRequired()) return true;
+  const header = req.headers['authorization'] || '';
+  const [scheme, encoded] = header.split(' ');
+  if (scheme !== 'Basic' || !encoded) return false;
+  let decoded;
+  try {
+    decoded = Buffer.from(encoded, 'base64').toString('utf8');
+  } catch {
+    return false;
+  }
+  const sep = decoded.indexOf(':');
+  if (sep === -1) return false;
+  const user = decoded.slice(0, sep);
+  const pass = decoded.slice(sep + 1);
+  // Compare both fields even on a username mismatch to avoid short-circuiting.
+  const userOk = safeEqual(user, process.env.BASIC_AUTH_USER);
+  const passOk = safeEqual(pass, process.env.BASIC_AUTH_PASS);
+  return userOk && passOk;
+}
+
+function sendUnauthorized(res) {
+  res.writeHead(401, {
+    'WWW-Authenticate': 'Basic realm="panini-diff", charset="UTF-8"',
+    'Content-Type': 'text/plain; charset=utf-8',
+  });
+  res.end('Authentication required');
 }
 
 function sendJson(res, status, obj) {
@@ -145,6 +191,9 @@ export function createServer() {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const pathname = url.pathname;
 
+    // Gate everything behind Basic Auth first when it's enabled for the deploy.
+    if (!checkAuth(req)) return sendUnauthorized(res);
+
     if (req.method === 'GET' && pathname === '/api/health') {
       return sendJson(res, 200, { hasKey: hasKey(), defaultModel: DEFAULT_MODEL });
     }
@@ -168,5 +217,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     if (!hasKey()) {
       console.log('⚠  ANTHROPIC_API_KEY not set — text lists work, image extraction is disabled.');
     }
+    console.log(
+      authRequired()
+        ? '🔒 Basic auth enabled (BASIC_AUTH_USER/PASS set).'
+        : '🔓 Basic auth disabled — set BASIC_AUTH_USER and BASIC_AUTH_PASS to protect a deploy.'
+    );
   });
 }

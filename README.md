@@ -51,6 +51,20 @@ Real-world messiness observed in `evals/`:
 - junk: prices, URLs, phone numbers, chat UI, section headers
 - redacted / blurred cells in photos → reported as unreadable, not invented
 
+## Web UI & deploy
+
+```bash
+npm run web     # http://localhost:5173 (reads .env; ANTHROPIC_API_KEY enables image extraction)
+```
+
+To password-protect a deployment, set both `BASIC_AUTH_USER` and `BASIC_AUTH_PASS`
+— the server then requires HTTP Basic Auth on every route. Leave them unset (as in
+local dev) and the site stays open.
+
+```bash
+BASIC_AUTH_USER=me BASIC_AUTH_PASS=letmein npm run web
+```
+
 ## Tests & evals
 
 ```bash
