@@ -34,6 +34,7 @@ export const SPECIAL_CODES = new Set(['FWC', 'CC', '00']);
 export const CODE_ALIASES = {
   SWI: 'SUI', CHE: 'SUI',
   SAU: 'KSA',
+  JAP: 'JPN',
   IVC: 'CIV',
   DEU: 'GER',
   HOL: 'NED', NLD: 'NED',

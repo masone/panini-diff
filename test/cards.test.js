@@ -50,6 +50,21 @@ test('wrong-code aliases are normalized: SWI->SUI, SAU->KSA, EGV->EGY', () => {
   assert.deepEqual(keys('EGV 9'), ['EGY 9']);
 });
 
+test('lowercase codes match: "jor 15", mixed inline "jor 15, ger 9"', () => {
+  assert.deepEqual(keys('jor 15'), ['JOR 15']);
+  assert.deepEqual(keys('jor 15, ger 9'), ['JOR 15', 'GER 9']);
+});
+
+test('JAP alias resolves to JPN (any case)', () => {
+  assert.deepEqual(keys('JAP 5'), ['JPN 5']);
+  assert.deepEqual(keys('jap 5'), ['JPN 5']);
+});
+
+test('lowercase/mixed-case country name still resolves, not carved into junk', () => {
+  assert.deepEqual(keys('iran 3'), ['IRN 3']);
+  assert.deepEqual(keys('Iran 3'), ['IRN 3']);
+});
+
 test('German name-only row maps to code: "Belgien: 2, 19"', () => {
   assert.deepEqual(keys('Belgien: 2, 19'), ['BEL 2', 'BEL 19']);
 });
