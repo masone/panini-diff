@@ -9,7 +9,6 @@
   "scripts": {
     "diff": "node src/cli.js",
     "deploy": "vercel --prod",
-    "dev": "node --env-file=.env src/devServer.js",
     "test": "node --test 'test/**/*.test.js'",
     "eval": "node evals/extract.eval.js"
   },

@@ -1,5 +1,5 @@
-// GET /api/health -> { hasKey, defaultModel }, same contract as src/devServer.js,
-// so the client's `hasKey` check behaves identically on Vercel and locally.
+// GET /api/health -> { hasKey, defaultModel } so the client can warn before an
+// upload when no server-side ANTHROPIC_API_KEY is configured.
 
 import { DEFAULT_MODEL } from '../src/extract.js';
 

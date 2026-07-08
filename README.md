@@ -55,52 +55,50 @@ Real-world messiness observed in `evals/`:
 
 The text-diffing UI runs entirely client-side; image extraction needs a
 backend (Claude vision needs `ANTHROPIC_API_KEY`, which must never reach the
-browser).
+browser). There is **one** backend — the Vercel serverless functions in
+`api/*.js` plus the `middleware.js` auth gate — and it runs identically locally
+and in production, so there is no second code path that can drift.
 
-**Plain node** (`src/devServer.js`, all-in-one dev server):
+**Local** — run the exact serverless stack via `vercel dev`:
 
 ```bash
 echo "ANTHROPIC_API_KEY=sk-..." > .env
-npm run dev   # http://localhost:5173
-```
-
-**Vercel** (`api/*.js`, deployed as serverless functions):
-
-```bash
 npx vercel dev   # http://localhost:3000, reads .env automatically
 ```
 
-(Run `vercel dev` directly, not via an npm script — Vercel auto-detects a
-`package.json` `"dev"` script as the project's Development Command, and a
+(Run `vercel dev` directly, not via an npm `"dev"` script — Vercel auto-detects
+a `package.json` `"dev"` script as the project's Development Command, so a
 script that itself runs `vercel dev` recurses into itself.)
+
+**Deploy:**
 
 ```bash
 npx vercel        # deploy a preview
-npx vercel --prod # deploy to production
+npm run deploy    # vercel --prod
 ```
 
 Set `ANTHROPIC_API_KEY` as an environment variable in the Vercel project
 settings (or `vercel env add ANTHROPIC_API_KEY`) before deploying — without it
 image extraction is disabled but text-list diffing still works.
 
-`api/extract.js` and `api/health.js` are thin Vercel wrappers around the same
-validation/error logic in [`src/httpExtract.js`](src/httpExtract.js) that
-`src/devServer.js` uses, so behavior is identical on both hosts.
+`api/extract.js` and `api/health.js` are thin Vercel wrappers around the
+validation/error logic in [`src/httpExtract.js`](src/httpExtract.js).
 
-### Password-protecting a deployment
+### Password-protecting the site
 
 Set both `BASIC_AUTH_USER` and `BASIC_AUTH_PASS` to gate the whole site behind
-HTTP Basic Auth; leave them unset (as in local dev) and it stays open.
+HTTP Basic Auth; leave them unset and it stays open. [`middleware.js`](middleware.js)
+(Vercel Edge Middleware) enforces it — the one layer that runs before both the
+CDN-served static assets and the `/api/*` functions, so a single gate covers
+everything. It runs the same under `vercel dev` and in prod:
 
-- **On Vercel**, [`middleware.js`](middleware.js) (Edge Middleware) enforces it —
-  the one layer that runs before both the CDN-served static assets and the
-  `/api/*` functions. Add the two vars in the Vercel project's environment
-  settings (or `vercel env add`).
-- **Locally**, `src/devServer.js` enforces the same gate:
+```bash
+# locally, with vercel dev
+BASIC_AUTH_USER=me BASIC_AUTH_PASS=letmein npx vercel dev
+```
 
-  ```bash
-  BASIC_AUTH_USER=me BASIC_AUTH_PASS=letmein npm run dev
-  ```
+On Vercel, add the two vars in the project's environment settings (or
+`vercel env add`).
 
 ## Tests & evals
 
@@ -128,9 +126,8 @@ were corrected this way, confirmed by cropping/zooming the source).
 | `src/checklist.js` | the 48 team codes, specials, aliases, name→code map |
 | `src/extract.js` | image → cards via Claude vision |
 | `src/httpExtract.js` | shared extract-route logic (validation, error mapping) |
-| `src/devServer.js` | plain-node dev server (`npm run dev`) |
 | `src/cli.js` | two-file CLI |
-| `api/extract.js`, `api/health.js` | Vercel serverless equivalents of the same routes |
-| `middleware.js` | Vercel Edge Middleware — HTTP Basic Auth gate for the deploy |
+| `api/extract.js`, `api/health.js` | Vercel serverless functions (the web backend) |
+| `middleware.js` | Vercel Edge Middleware — HTTP Basic Auth gate for the site |
 | `web/` | drag-and-drop browser UI |
 | `evals/` | sample images/lists, ground-truth fixtures, eval runner |

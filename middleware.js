@@ -1,10 +1,10 @@
-// Vercel Edge Middleware — HTTP Basic Auth gate for the whole deployment.
+// Vercel Edge Middleware — HTTP Basic Auth gate for the whole app.
 //
-// Unlike the src/devServer.js handler, the Vercel deploy has no single request
-// handler to hang auth off: static assets (/, /app.js, /style.css) are served
-// straight from the CDN via vercel.json rewrites, and /api/* are independent
-// serverless functions. Edge Middleware is the one layer that runs before ALL
-// of them, so this is where the password gate belongs.
+// The app has no single request handler to hang auth off: static assets
+// (/, /app.js, /style.css) are served straight from the CDN via vercel.json
+// rewrites, and /api/* are independent serverless functions. Edge Middleware is
+// the one layer that runs before ALL of them, so this is where the password
+// gate belongs. It runs identically under `vercel dev` locally and in prod.
 //
 // Activates only when both BASIC_AUTH_USER and BASIC_AUTH_PASS are set (as they
 // are in the Vercel project env). With neither set, every request passes through
