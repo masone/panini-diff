@@ -22,12 +22,15 @@ function extractNumbers(blob) {
   return out;
 }
 
-// Matches a code (2-4 uppercase letters, or the numeric "00" logo) directly
-// followed by a run of sticker numbers. Handles spaced ("GER 9"), colon
-// ("GER: 9"), concatenated ("GHA8") and inline-repeated ("MAR 11, BEL 10")
-// forms. The number run tolerates leading/among commas, extra spaces, and the
-// double-comma OCR noise seen in the eval images.
-const CODE_SEGMENT = /([A-Z]{2,4}|00)\s*[:.-]?((?:[\s,\-]*\d{1,2})+)/g;
+// Matches a code (2-4 letters, any case, or the numeric "00" logo) directly
+// followed by a run of sticker numbers. Handles spaced ("GER 9" / "ger 9"),
+// colon ("GER: 9"), concatenated ("GHA8") and inline-repeated ("MAR 11, BEL 10")
+// forms. Case-insensitive, but the code must be a whole letter-run — the
+// (?<![...]) / (?![...]) guards keep us from carving a bogus code out of the
+// middle of a country name ("Belgien" must not yield "gien"). The number run
+// tolerates leading/among commas, extra spaces, and the double-comma OCR noise
+// seen in the eval images.
+const CODE_SEGMENT = /(?<![A-Za-zÀ-ÿ])([A-Za-z]{2,4}|00)(?![A-Za-zÀ-ÿ])\s*[:.-]?((?:[\s,\-]*\d{1,2})+)/g;
 
 // Strip quantity markers — "(3x)", "( 2 x )", "x3" — since counts are ignored.
 function stripCounts(line) {
@@ -40,7 +43,14 @@ function stripCounts(line) {
 // and the image extractor so both go through identical validation/aliasing. The
 // raw code may be a canonical Panini code, a wrong-code alias, or a country name.
 export function buildCard(rawCode, number, extra = {}) {
-  const resolved = resolveCode(rawCode);
+  let resolved = resolveCode(rawCode);
+  // Case-insensitive matching can capture a country name as if it were a code
+  // (e.g. "Iran", "iran"). If the token isn't a real code, try resolving it as
+  // a name before giving up and flagging it unknown.
+  if (!resolved.valid) {
+    const named = codeForName(rawCode);
+    if (named) resolved = resolveCode(named);
+  }
   const inRange = number >= 1 && number <= MAX_TEAM_NUMBER;
   const flags = [];
   if (!resolved.valid) flags.push('unknown-code');
@@ -62,9 +72,10 @@ export function parseLine(line, lineNo = 0) {
   const warnings = [];
   const cleaned = stripCounts(line).replace(/[·•]/g, ' ').replace(/ /g, ' ');
 
-  const addCard = (rawCode, resolved, number) => {
-    entries.push(buildCard(rawCode, number, { line: lineNo }));
-    if (!resolved.valid) {
+  const addCard = (rawCode, number) => {
+    const card = buildCard(rawCode, number, { line: lineNo });
+    entries.push(card);
+    if (card.flags.includes('unknown-code')) {
       warnings.push({ line: lineNo, text: line.trim(), reason: `unknown code "${String(rawCode).toUpperCase()}"` });
     }
   };
@@ -75,8 +86,7 @@ export function parseLine(line, lineNo = 0) {
   while ((m = CODE_SEGMENT.exec(cleaned)) !== null) {
     matchedAnyCode = true;
     const rawCode = m[1];
-    const resolved = resolveCode(rawCode);
-    for (const n of extractNumbers(m[2])) addCard(rawCode, resolved, n);
+    for (const n of extractNumbers(m[2])) addCard(rawCode, n);
   }
 
   // No uppercase code on the line — try a name-only row like "Belgien 2, 19".
@@ -86,9 +96,8 @@ export function parseLine(line, lineNo = 0) {
       const code = codeForName(nameM[1]);
       const nums = extractNumbers(nameM[2]);
       if (code && nums.length) {
-        const resolved = resolveCode(code);
         // pass the resolved code (not the raw name) so buildCard validates it.
-        for (const n of nums) addCard(resolved.code, resolved, n);
+        for (const n of nums) addCard(code, n);
       }
     }
   }
